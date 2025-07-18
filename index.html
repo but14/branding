@@ -1,0 +1,1151 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Công cụ So sánh Nhà cung cấp Dịch vụ Thương hiệu</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Inter", sans-serif;
+      }
+      th,
+      td {
+        border: 1px solid #e2e8f0;
+        padding: 10px;
+        vertical-align: top;
+        text-align: left;
+        min-width: 150px;
+      }
+      th:first-child,
+      td:first-child {
+        min-width: 320px;
+        font-weight: 500;
+      }
+      th {
+        background-color: #f1f5f9;
+        font-weight: 600;
+      }
+      td {
+        background-color: #ffffff;
+      }
+      .tab-content {
+        display: none;
+      }
+      .tab-content.active {
+        display: block;
+      }
+      .tab-btn {
+        background-color: transparent;
+        border: 0;
+        border-bottom: 2px solid transparent;
+        cursor: pointer;
+        padding: 0.75rem 0.5rem;
+        margin-bottom: -1px;
+        font-size: 0.875rem;
+        font-weight: 400;
+        color: #4b5563;
+        transition: all 150ms;
+      }
+      .tab-btn:hover {
+        color: #059669;
+      }
+      .tab-btn.active {
+        border-color: #059669;
+        color: #047857;
+        font-weight: 500;
+      }
+      td[contenteditable="true"] {
+        background-color: #fefce8;
+      }
+      td[contenteditable="true"]:focus {
+        outline: 2px solid #059669;
+        background-color: #ffffff;
+      }
+      .chart-container {
+        border: 1px solid #e2e8f0;
+        padding: 1rem;
+        border-radius: 0.75rem;
+        background-color: #fff;
+      }
+      .evaluation-basis {
+        font-size: 0.8rem;
+        color: #475569;
+        background-color: #f1f5f9 !important;
+        padding: 6px 10px;
+      }
+      .group-score-display {
+        font-weight: bold;
+      }
+      .group-score-display .max-score {
+        color: #64748b;
+        font-weight: normal;
+      }
+      .sub-header td {
+        background-color: #f8fafc;
+        font-weight: bold;
+        color: #334155;
+        text-transform: uppercase;
+        font-size: 0.8rem;
+      }
+      .description-row td {
+        color: #64748b;
+        font-size: 0.75rem;
+        font-style: italic;
+        padding-top: 0;
+        padding-bottom: 8px;
+        border-top: 0;
+      }
+    </style>
+  </head>
+  <body class="bg-gray-50 text-gray-800 p-4 sm:p-6 md:p-8">
+    <div class="max-w-7xl mx-auto bg-white rounded-xl shadow-lg p-6">
+      <div
+        class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6"
+      >
+        <div>
+          <h1 class="text-2xl font-bold text-gray-900">
+            Công cụ So sánh Nhận diện & Xây dựng Thương hiệu
+          </h1>
+          <p class="mt-1 text-gray-500">
+            Đánh giá toàn diện về năng lực chiến lược, sáng tạo, quy trình và
+            chi phí.
+          </p>
+        </div>
+        <button
+          id="export-btn"
+          class="mt-4 sm:mt-0 w-full sm:w-auto bg-emerald-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-emerald-700 transition duration-300 flex items-center justify-center"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-5 w-5 mr-2"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path
+              d="M10.75 2.75a.75.75 0 00-1.5 0v8.614L6.295 8.235a.75.75 0 10-1.09 1.03l4.25 4.5a.75.75 0 001.09 0l4.25-4.5a.75.75 0 10-1.09-1.03l-2.905 3.079V2.75z"
+            />
+            <path
+              d="M3.5 12.75a.75.75 0 00-1.5 0v2.5A2.75 2.75 0 004.75 18h10.5A2.75 2.75 0 0018 15.25v-2.5a.75.75 0 00-1.5 0v2.5c0 .69-.56 1.25-1.25 1.25H4.75c-.69 0-1.25-.56-1.25-1.25v-2.5z"
+            />
+          </svg>
+          Xuất ra Excel
+        </button>
+      </div>
+
+      <div class="border-b border-gray-200 mb-6 overflow-x-auto">
+        <nav class="flex -mb-px" aria-label="Tabs">
+          <button class="tab-btn active whitespace-nowrap" data-tab="tab1">
+            1. Năng lực & Kinh nghiệm
+          </button>
+          <button class="tab-btn whitespace-nowrap" data-tab="tab2">
+            2. Năng lực Chiến lược
+          </button>
+          <button class="tab-btn whitespace-nowrap" data-tab="tab3">
+            3. Năng lực Thiết kế
+          </button>
+          <button class="tab-btn whitespace-nowrap" data-tab="tab4">
+            4. Phạm vi Ứng dụng
+          </button>
+          <button class="tab-btn whitespace-nowrap" data-tab="tab5">
+            5. Quy trình & Hậu mãi
+          </button>
+          <button class="tab-btn whitespace-nowrap" data-tab="tab6">
+            6. Chi phí & Điều khoản
+          </button>
+          <button class="tab-btn whitespace-nowrap" data-tab="tab7">
+            7. Bảng Chấm Điểm
+          </button>
+          <button class="tab-btn whitespace-nowrap" data-tab="tab8">
+            8. Dashboard
+          </button>
+          <button class="tab-btn whitespace-nowrap" data-tab="tab9">
+            9. Đánh giá SWOT
+          </button>
+        </nav>
+      </div>
+
+      <div id="tab-container" class="overflow-x-auto">
+        <div id="tab1" class="tab-content active">
+          <h3 class="font-semibold mb-2">
+            1. Thông tin Năng lực & Kinh nghiệm Agency
+          </h3>
+          <table id="table-1" class="w-full text-sm"></table>
+        </div>
+        <div id="tab2" class="tab-content">
+          <h3 class="font-semibold mb-2">
+            2. Phân tích Năng lực Chiến lược & Phân tích
+          </h3>
+          <table id="table-2" class="w-full text-sm"></table>
+        </div>
+        <div id="tab3" class="tab-content">
+          <h3 class="font-semibold mb-2">
+            3. Phân tích Năng lực Thiết kế & Sáng tạo
+          </h3>
+          <table id="table-3" class="w-full text-sm"></table>
+        </div>
+        <div id="tab4" class="tab-content">
+          <h3 class="font-semibold mb-2">
+            4. Checklist Phạm vi Ứng dụng & Bàn giao
+          </h3>
+          <table id="table-4" class="w-full text-sm"></table>
+        </div>
+        <div id="tab5" class="tab-content">
+          <h3 class="font-semibold mb-2">
+            5. Phân tích Quy trình triển khai & Hậu mãi
+          </h3>
+          <table id="table-5" class="w-full text-sm"></table>
+        </div>
+        <div id="tab6" class="tab-content">
+          <h3 class="font-semibold mb-2">
+            6. Phân tích Chi phí & Điều khoản Thương mại
+          </h3>
+          <table id="table-6" class="w-full text-sm"></table>
+        </div>
+        <div id="tab7" class="tab-content">
+          <h3 class="font-semibold mb-2">7. Bảng Chấm Điểm Tổng Hợp</h3>
+          <p class="text-sm text-gray-500 mb-4">
+            Chấm điểm cho từng tiêu chí con. Điểm nhóm và Tổng điểm sẽ được tự
+            động tính toán.
+          </p>
+          <table id="table-7-scoring" class="w-full text-sm"></table>
+        </div>
+        <div id="tab8" class="tab-content">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="font-semibold text-xl">
+              8. Dashboard - Bảng điều khiển Trực quan
+            </h3>
+            <button
+              id="update-charts-btn"
+              class="bg-green-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-green-700 transition duration-300 flex items-center"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-5 w-5 mr-2"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fill-rule="evenodd"
+                  d="M15.312 11.424a5.5 5.5 0 01-9.201-4.46_5.5 5.5 0 011.643-1.644l.11-.112a.75.75 0 011.06 1.06l-.11.112a4 4 0 00-1.196 1.196 4.002 4.002 0 006.585 3.235l.233.233A5.5 5.5 0 0115.312 11.424zM18.75 13a.75.75 0 01-.75.75h-3.5a.75.75 0 010-1.5h2.323l-3.3-3.3a.75.75 0 111.06-1.06l3.3 3.3V8.5a.75.75 0 011.5 0v3.75c0 .414-.336.75-.75.75z"
+                  clip-rule="evenodd"
+                />
+              </svg>
+              Cập nhật Biểu đồ & Bảng
+            </button>
+          </div>
+          <div class="space-y-8">
+            <div class="chart-container">
+              <h4 class="font-bold text-center mb-4">Bảng xếp hạng tổng thể</h4>
+              <table id="table-8-summary" class="w-full text-sm"></table>
+            </div>
+            <div class="chart-container">
+              <h4 class="font-bold text-center mb-2">
+                So sánh Giá trị: Năng lực vs. Chi phí
+              </h4>
+              <canvas id="valueChart"></canvas>
+            </div>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div class="chart-container">
+                <h4 class="font-bold text-center mb-2">
+                  Điểm Năng lực & Kinh nghiệm
+                </h4>
+                <canvas id="competencyChart"></canvas>
+              </div>
+              <div class="chart-container">
+                <h4 class="font-bold text-center mb-2">
+                  Điểm Chiến lược Thương hiệu
+                </h4>
+                <canvas id="strategyChart"></canvas>
+              </div>
+              <div class="chart-container">
+                <h4 class="font-bold text-center mb-2">
+                  Điểm Năng lực Thiết kế
+                </h4>
+                <canvas id="designChart"></canvas>
+              </div>
+              <div class="chart-container">
+                <h4 class="font-bold text-center mb-2">
+                  Điểm Quy trình & Hậu mãi
+                </h4>
+                <canvas id="processChart"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div id="tab9" class="tab-content">
+          <h3 class="font-semibold mb-2">9. Phân tích SWOT</h3>
+          <table id="table-9-swot" class="w-full text-sm"></table>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const sampleData = {
+        vendors: ["Agency A", "Agency B", "Agency C"],
+        "table-1": [
+          { type: "header", text: "Năng lực & Kinh nghiệm" },
+          { type: "item", text: "Hồ sơ năng lực (Profile)" },
+          {
+            type: "description",
+            text: "Đánh giá sự đầy đủ, chuyên nghiệp của hồ sơ năng lực do agency cung cấp.",
+          },
+          { type: "item", text: "Cơ cấu tổ chức chuyên biệt cho Branding" },
+          {
+            type: "description",
+            text: "Kiểm tra sự hiện diện của các vị trí chủ chốt như: Brand Strategist, Art Director, Copywriter, Designer...",
+          },
+          { type: "item", text: "Kinh nghiệm dự án tương tự" },
+          {
+            type: "description",
+            text: "Liệt kê các dự án đã thực hiện trong ngành khách sạn/resort hoặc có quy mô/phạm vi tương đương.",
+          },
+          { type: "item", text: "Tỷ lệ đội ngũ in-house vs. outsource" },
+          {
+            type: "description",
+            text: "Ghi rõ tỷ lệ nhân sự nội bộ thực hiện dự án, nếu outsource thì đối tác là ai.",
+          },
+        ],
+        "table-2": [
+          { type: "header", text: "Năng lực Chiến lược & Phân tích" },
+          {
+            type: "item",
+            text: "Phân tích bối cảnh ngành, insight khách hàng & đối thủ",
+          },
+          {
+            type: "description",
+            text: "Mô tả phương pháp và kết quả phân tích của agency về thị trường.",
+          },
+          { type: "item", text: "Đề xuất định vị thương hiệu" },
+          {
+            type: "description",
+            text: "Ghi lại đề xuất về định vị (VD: theo cảm xúc, lý tính, phân khúc...) và các lập luận đi kèm.",
+          },
+          { type: "item", text: "Đề xuất nền tảng thương hiệu" },
+          {
+            type: "description",
+            text: "Bao gồm các đề xuất về: Câu chuyện, Tầm nhìn, Sứ mệnh, Giá trị cốt lõi.",
+          },
+          {
+            type: "item",
+            text: "Đề xuất giọng nói thương hiệu (Brand Voice & Tone)",
+          },
+          {
+            type: "description",
+            text: "Mô tả giọng điệu, văn phong mà agency đề xuất cho thương hiệu.",
+          },
+          {
+            type: "item",
+            text: "Đề xuất thông điệp & concept truyền thông (Key Visual)",
+          },
+          {
+            type: "description",
+            text: "Ghi lại tagline hoặc concept hình ảnh chủ đạo được đề xuất.",
+          },
+        ],
+        "table-3": [
+          { type: "header", text: "Năng lực Thiết kế & Sáng tạo" },
+          { type: "item", text: "Thiết kế logo & các phiên bản" },
+          {
+            type: "description",
+            text: "Đánh giá logo đề xuất, kiểm tra có đủ các phiên bản: dọc, ngang, icon, màu đơn sắc.",
+          },
+          { type: "item", text: "Hệ thống nhận diện" },
+          {
+            type: "description",
+            text: "Bao gồm: hệ màu sắc, bộ font chữ, pattern/motif đồ họa được đề xuất.",
+          },
+          { type: "item", text: "Tính sáng tạo & độc quyền" },
+          {
+            type: "description",
+            text: "Thiết kế có mang bản sắc riêng, có yếu tố đột phá không? Có dễ dàng đăng ký bản quyền không?",
+          },
+          { type: "item", text: "Tính hệ thống & khả năng mở rộng" },
+          {
+            type: "description",
+            text: "Hệ thống nhận diện có đồng bộ và dễ dàng áp dụng cho các sản phẩm/dịch vụ mới trong tương lai không?",
+          },
+        ],
+        "table-4": [
+          {
+            type: "header",
+            text: 'I. HỆ THỐNG TRUYỀN THÔNG TĨNH (Điền "Có" hoặc mô tả)',
+          },
+          { type: "item", text: "Bộ ứng dụng văn phòng" },
+          {
+            type: "description",
+            text: "Danh thiếp, giấy tiêu đề, phong bì thư, kẹp tài liệu, hóa đơn, bìa hợp đồng...",
+          },
+          { type: "item", text: "Bộ nhận diện Spa/Nhà hàng" },
+          {
+            type: "description",
+            text: "Menu, thẻ liệu trình, phiếu giảm giá, khăn ăn, ly/dĩa...",
+          },
+          { type: "item", text: "Trang phục nhân viên" },
+          {
+            type: "description",
+            text: "Trang phục quản lý, lễ tân, nhà hàng, buồng phòng, tạp dề, thẻ tên...",
+          },
+          { type: "item", text: "Hệ thống biển bảng" },
+          {
+            type: "description",
+            text: "Backdrop lễ tân, biển tên KS, biển phòng ban, biển chỉ dẫn...",
+          },
+          { type: "item", text: "Template trình chiếu Powerpoint" },
+          {
+            type: "description",
+            text: "Trang bìa, trang nội dung, trang biểu đồ, trang liên hệ...",
+          },
+          {
+            type: "header",
+            text: 'II. HỆ THỐNG TRUYỀN THÔNG ĐỘNG (Điền "Có" hoặc mô tả)',
+          },
+          { type: "item", text: "Profile giới thiệu công ty" },
+          {
+            type: "description",
+            text: "Thiết kế layout, biên soạn cấu trúc nội dung...",
+          },
+          { type: "item", text: "Ứng dụng cho Website & Digital" },
+          {
+            type: "description",
+            text: "Giao diện UI/UX cho web/mobile, banner quảng cáo, mẫu email signature...",
+          },
+          { type: "item", text: "Hệ thống mạng xã hội" },
+          {
+            type: "description",
+            text: "Facebook cover, avatar, mẫu banner/post...",
+          },
+          { type: "item", text: "Bộ quà tặng quảng cáo" },
+          {
+            type: "description",
+            text: "Ô dù, bút, sổ tay, áo mưa, túi quà, thẻ VIP...",
+          },
+          { type: "item", text: "Ấn phẩm Lễ/Tết & Sự kiện" },
+          {
+            type: "description",
+            text: "Lịch, thiệp, backdrop, thư mời, bằng khen...",
+          },
+          {
+            type: "header",
+            text: 'III. HỒ SƠ BÀN GIAO CUỐI CÙNG (Điền "Có" hoặc mô tả)',
+          },
+          { type: "item", text: "Hồ sơ file thiết kế" },
+          {
+            type: "description",
+            text: "Bao gồm file gốc (AI, SVG, PSD...), file ảnh (PNG, JPG...), bộ font chữ...",
+          },
+          {
+            type: "item",
+            text: "Bản hướng dẫn sử dụng thương hiệu (Brand Guidelines)",
+          },
+          {
+            type: "description",
+            text: "Tài liệu PDF chi tiết, quy định cách sử dụng logo, màu sắc, font chữ và các yếu tố nhận diện.",
+          },
+        ],
+        "table-5": [
+          { type: "header", text: "Quy trình & Giao tiếp" },
+          { type: "item", text: "Quy trình triển khai & Timeline dự kiến" },
+          {
+            type: "description",
+            text: "Mô tả rõ các giai đoạn: Brief - Nghiên cứu - Concept - Duyệt - Triển khai - Bàn giao.",
+          },
+          { type: "item", text: "Cách thức giao tiếp & phản hồi" },
+          {
+            type: "description",
+            text: "Ai là đầu mối? Dùng công cụ gì (Zoom, email, Zalo...)? Tần suất báo cáo?",
+          },
+          { type: "item", text: "Khả năng phối hợp đa phòng ban" },
+          {
+            type: "description",
+            text: "Agency có kinh nghiệm làm việc với nhiều phòng ban (Marketing, CEO, IT...) không?",
+          },
+          { type: "header", text: "Chính sách Hậu mãi" },
+          { type: "item", text: "Chính sách hậu mãi/chỉnh sửa sau bàn giao" },
+          {
+            type: "description",
+            text: "Thời gian hỗ trợ (VD: 1-3 tháng), phạm vi (chỉnh sửa nhỏ, giải đáp thắc mắc...)",
+          },
+        ],
+        "table-6": [
+          ["Hạng mục Chi phí & Điều khoản", "Agency A", "Agency B", "Agency C"],
+          ["Báo giá chi tiết theo từng hạng mục", "", "", ""],
+          ["Tổng chi phí dự án (chưa VAT)", "", "", ""],
+          ["Điều kiện thanh toán (VD: 40%-30%-30%)", "", "", ""],
+        ],
+        "table-7-scores": { "Agency A": {}, "Agency B": {}, "Agency C": {} },
+        "table-9-swot": [
+          ["Phân tích", "Agency A", "Agency B", "Agency C"],
+          ["Strengths (Điểm mạnh)", "", "", ""],
+          ["Weaknesses (Điểm yếu)", "", "", ""],
+          ["Opportunities (Cơ hội)", "", "", ""],
+          ["Threats (Thách thức)", "", "", ""],
+        ],
+      };
+
+      document.addEventListener("DOMContentLoaded", function () {
+        function createScoringTable() {
+          const table = document.getElementById("table-7-scoring");
+          const vendors = sampleData.vendors;
+          const scores = sampleData["table-7-scores"];
+          const structure = [
+            {
+              key: "1",
+              title: "1. Năng lực tổ chức & kinh nghiệm triển khai",
+              weight: 20,
+              children: [
+                {
+                  key: "1.1",
+                  title: "1.1 Hồ sơ năng lực & cơ cấu tổ chức",
+                  max_score: 5,
+                  basis: "Cơ cấu tổ chức (Tab 1)",
+                },
+                {
+                  key: "1.2",
+                  title: "1.2 Kinh nghiệm thực hiện các dự án tương tự",
+                  max_score: 5,
+                  basis: "Kinh nghiệm dự án (Tab 1)",
+                },
+                {
+                  key: "1.3",
+                  title: "1.3 Tính chuyên nghiệp và hệ thống quản lý dự án",
+                  max_score: 5,
+                  basis: "Quy trình triển khai (Tab 5)",
+                },
+                {
+                  key: "1.4",
+                  title: "1.4 Năng lực nội bộ vs outsource",
+                  max_score: 5,
+                  basis: "Tỷ lệ in-house (Tab 1)",
+                },
+              ],
+            },
+            {
+              key: "2",
+              title: "2. Hiểu biết ngành hàng & chiến lược thương hiệu",
+              weight: 20,
+              children: [
+                {
+                  key: "2.1",
+                  title: "2.1 Hiểu rõ ngành hàng và khách hàng mục tiêu",
+                  max_score: 5,
+                  basis: "Phân tích bối cảnh (Tab 2)",
+                },
+                {
+                  key: "2.2",
+                  title: "2.2 Đề xuất định vị thương hiệu rõ ràng",
+                  max_score: 5,
+                  basis: "Đề xuất định vị (Tab 2)",
+                },
+                {
+                  key: "2.3",
+                  title: "2.3 Chiến lược thương hiệu tổng thể",
+                  max_score: 5,
+                  basis: "Đề xuất nền tảng (Tab 2)",
+                },
+                {
+                  key: "2.4",
+                  title: "2.4 Đề xuất thông điệp & key visual",
+                  max_score: 5,
+                  basis: "Đề xuất thông điệp (Tab 2)",
+                },
+              ],
+            },
+            {
+              key: "3",
+              title: "3. Năng lực thiết kế & tính ứng dụng hệ thống nhận diện",
+              weight: 30,
+              children: [
+                {
+                  key: "3.1",
+                  title: "3.1 Thiết kế logo & concept chủ đạo",
+                  max_score: 5,
+                  basis: "Thiết kế logo (Tab 3)",
+                },
+                {
+                  key: "3.2",
+                  title: "3.2 Hệ thống màu sắc, font, pattern",
+                  max_score: 5,
+                  basis: "Hệ thống nhận diện (Tab 3)",
+                },
+                {
+                  key: "3.3",
+                  title: "3.3 Bộ ứng dụng văn phòng & marketing",
+                  max_score: 5,
+                  basis: "Bộ ứng dụng (Tab 4)",
+                },
+                {
+                  key: "3.4",
+                  title: "3.4 Khả năng ứng dụng số hóa",
+                  max_score: 5,
+                  basis: "Ứng dụng kỹ thuật số (Tab 4)",
+                },
+                {
+                  key: "3.5",
+                  title: "3.5 Tính hệ thống & mở rộng trong tương lai",
+                  max_score: 5,
+                  basis: "Tính hệ thống (Tab 3)",
+                },
+                {
+                  key: "3.6",
+                  title: "3.6 Tính sáng tạo & độc quyền",
+                  max_score: 5,
+                  basis: "Tính sáng tạo (Tab 3)",
+                },
+              ],
+            },
+            {
+              key: "4",
+              title: "4. Quy trình triển khai & giao tiếp",
+              weight: 15,
+              children: [
+                {
+                  key: "4.1",
+                  title: "4.1 Quy trình triển khai chi tiết & chuyên nghiệp",
+                  max_score: 5,
+                  basis: "Quy trình triển khai (Tab 5)",
+                },
+                {
+                  key: "4.2",
+                  title: "4.2 Cách thức giao tiếp & phản hồi",
+                  max_score: 5,
+                  basis: "Cách thức giao tiếp (Tab 5)",
+                },
+                {
+                  key: "4.3",
+                  title: "4.3 Khả năng phối hợp đa phòng ban",
+                  max_score: 5,
+                  basis: "Phối hợp (Tab 5)",
+                },
+              ],
+            },
+            {
+              key: "5",
+              title: "5. Hậu mãi, bàn giao & điều kiện thương mại",
+              weight: 15,
+              children: [
+                {
+                  key: "5.1",
+                  title: "5.1 Hồ sơ bàn giao đầy đủ & tiêu chuẩn chuyên môn",
+                  max_score: 5,
+                  basis: "Hồ sơ bàn giao (Tab 4)",
+                },
+                {
+                  key: "5.2",
+                  title: "5.2 Chính sách hậu mãi/chỉnh sửa",
+                  max_score: 5,
+                  basis: "Chính sách hậu mãi (Tab 5)",
+                },
+                {
+                  key: "5.3",
+                  title: "5.3 Giá cả & điều kiện thanh toán",
+                  max_score: 5,
+                  basis: "Tổng chi phí (Tab 6)",
+                },
+              ],
+            },
+          ];
+
+          let headHTML = `<thead><tr><th>Tiêu chí đánh giá</th><th>Điểm tối đa</th>`;
+          vendors.forEach(
+            (v) => (headHTML += `<th contenteditable="true">${v}</th>`)
+          );
+          headHTML += `</tr></thead>`;
+
+          let bodyHTML = `<tbody>`;
+          structure.forEach((group) => {
+            bodyHTML += `<tr class="bg-emerald-100 text-emerald-900 font-bold text-base border-t-2 border-gray-300">
+                        <td>${group.title}</td>
+                        <td class="text-center">${group.weight}</td>
+                        ${vendors
+                          .map(
+                            (v, i) =>
+                              `<td class="group-score-display bg-emerald-200 text-center" data-score-group="${group.key}" data-vendor-index="${i}"><span class="score">0.0</span> <span class="max-score">/ ${group.weight}</span></td>`
+                          )
+                          .join("")}
+                    </tr>`;
+            group.children.forEach((item) => {
+              bodyHTML += `<tr>
+                            <td class="pl-8">${item.title}</td>
+                            <td class="text-center">${item.max_score}</td>
+                            ${vendors
+                              .map(
+                                (v, i) =>
+                                  `<td data-score="${
+                                    item.key
+                                  }" data-max-score="${
+                                    item.max_score
+                                  }" data-vendor-index="${i}" contenteditable="true" class="text-center">${
+                                    scores[v]?.[item.key] || ""
+                                  }</td>`
+                              )
+                              .join("")}
+                        </tr>`;
+              if (item.basis) {
+                bodyHTML += `<tr><td colspan="${
+                  vendors.length + 2
+                }" class="evaluation-basis" data-basis-for="${
+                  item.key
+                }"><strong>Cơ sở:</strong></td></tr>`;
+              }
+            });
+          });
+          bodyHTML += `<tr class="font-bold bg-emerald-700 text-white text-lg">
+                    <td>TỔNG CỘNG (Thang 100)</td>
+                    <td class="text-center" id="total-weight">100</td>
+                    ${vendors
+                      .map(
+                        (v, i) =>
+                          `<td id="total-score-${i}" class="text-center">0.0</td>`
+                      )
+                      .join("")}
+                </tr>`;
+          bodyHTML += `</tbody>`;
+          table.innerHTML = headHTML + bodyHTML;
+        }
+
+        function populateSimpleTable(tableId, data) {
+          const table = document.getElementById(tableId);
+          if (!table) return;
+          const vendors = sampleData.vendors;
+          let headHTML = `<thead><tr><th>Hạng mục đánh giá</th>${vendors
+            .map((v) => `<th contenteditable="true">${v}</th>`)
+            .join("")}</tr></thead>`;
+
+          let bodyHtml = "<tbody>";
+          data.forEach((row) => {
+            if (row.type === "header") {
+              bodyHtml += `<tr class="sub-header"><td colspan="${
+                vendors.length + 1
+              }">${row.text}</td></tr>`;
+            } else if (row.type === "item") {
+              bodyHtml += `<tr><td class="font-semibold">${
+                row.text
+              }</td>${vendors
+                .map(() => `<td contenteditable="true"></td>`)
+                .join("")}</tr>`;
+              if (row.description) {
+                bodyHtml += `<tr class="description-row"><td colspan="${
+                  vendors.length + 1
+                }">${row.description}</td></tr>`;
+              }
+            }
+          });
+          bodyHtml += "</tbody>";
+          table.innerHTML = headHTML + bodyHtml;
+        }
+
+        // Special population for table 6 because it's simpler
+        function populateCostTable() {
+          const tableId = "table-6";
+          const data = sampleData[tableId];
+          const table = document.getElementById(tableId);
+          if (!table || !data) return;
+          let html = `<thead><tr>${data[0]
+            .map((h, i) =>
+              i === 0 ? `<th>${h}</th>` : `<th contenteditable="true">${h}</th>`
+            )
+            .join("")}</tr></thead><tbody>`;
+          data.slice(1).forEach((row) => {
+            html += `<tr>${row
+              .map((cell, index) => {
+                const isEditable = index !== 0;
+                return `<td ${
+                  isEditable ? 'contenteditable="true"' : ""
+                }>${cell}</td>`;
+              })
+              .join("")}</tr>`;
+          });
+          html += "</tbody>";
+          table.innerHTML = html;
+        }
+
+        function loadAllData() {
+          const tableIds = [
+            "table-1",
+            "table-2",
+            "table-3",
+            "table-4",
+            "table-5",
+          ];
+          tableIds.forEach((id) => {
+            if (sampleData[id]) {
+              populateSimpleTable(id, sampleData[id]);
+            }
+          });
+          populateCostTable();
+          populateSimpleTable("table-9-swot", sampleData["table-9-swot"]);
+          createScoringTable();
+        }
+
+        const tabs = document.querySelectorAll(".tab-btn");
+        tabs.forEach((tab) => {
+          tab.addEventListener("click", (e) => {
+            document
+              .querySelectorAll(".tab-btn.active")
+              .forEach((t) => t.classList.remove("active"));
+            e.target.classList.add("active");
+            document
+              .querySelector(".tab-content.active")
+              .classList.remove("active");
+            document
+              .getElementById(e.target.dataset.tab)
+              .classList.add("active");
+          });
+        });
+
+        function getCellValue(selector) {
+          const element = document.querySelector(selector);
+          return element
+            ? parseFloat(element.innerText.replace(/[^0-9.-]+/g, "")) || 0
+            : 0;
+        }
+
+        function calculateScores() {
+          const vendors = Array.from(
+            document.querySelectorAll(
+              "#table-7-scoring thead th[contenteditable]"
+            )
+          ).map((th) => th.innerText);
+          const numVendors = vendors.length;
+          const groups = ["1", "2", "3", "4", "5"];
+          let groupScores = Array(numVendors)
+            .fill(null)
+            .map(() => ({}));
+          let totalScores = Array(numVendors).fill(0);
+
+          vendors.forEach((_, vendorIndex) => {
+            let currentTotalScore = 0;
+            groups.forEach((groupKey) => {
+              let currentGroupScore = 0;
+              document
+                .querySelectorAll(
+                  `td[data-score][data-vendor-index="${vendorIndex}"]`
+                )
+                .forEach((cell) => {
+                  const scoreKey = cell.dataset.score;
+                  if (scoreKey.startsWith(groupKey)) {
+                    const maxScore = parseFloat(cell.dataset.maxScore) || 5;
+                    let score = parseFloat(cell.innerText) || 0;
+                    score = Math.min(score, maxScore);
+                    if (
+                      cell.innerText !== "" &&
+                      parseFloat(cell.innerText) !== score
+                    ) {
+                      cell.innerText = score;
+                    }
+                    currentGroupScore += score;
+                  }
+                });
+              const groupScoreCell = document.querySelector(
+                `td[data-score-group="${groupKey}"][data-vendor-index="${vendorIndex}"] .score`
+              );
+              if (groupScoreCell)
+                groupScoreCell.innerText = currentGroupScore.toFixed(1);
+              const groupWeight = getCellValue(
+                `td[data-weight-group="${groupKey}"]`
+              );
+              groupScores[vendorIndex][groupKey] =
+                groupWeight > 0 ? (currentGroupScore / groupWeight) * 10 : 0;
+              currentTotalScore += currentGroupScore;
+            });
+            totalScores[vendorIndex] = currentTotalScore;
+            const totalScoreCell = document.getElementById(
+              `total-score-${vendorIndex}`
+            );
+            if (totalScoreCell)
+              totalScoreCell.innerText = currentTotalScore.toFixed(1);
+          });
+          return { totalScores, groupScores, vendorNames: vendors };
+        }
+
+        function getTableData(tableId) {
+          const table = document.getElementById(tableId);
+          if (!table) return [];
+          const data = [];
+          const rows = table.querySelectorAll("tbody tr:not(.description-row)");
+          rows.forEach((row) => {
+            const rowData = [];
+            row.querySelectorAll("td, th").forEach((cell) => {
+              rowData.push(cell.innerText);
+            });
+            data.push(rowData);
+          });
+          return data;
+        }
+
+        function updateEvaluationBasis() {
+          const basisMap = {
+            1.1: { tableId: "table-1", term: "Cơ cấu tổ chức", tab: 1 },
+            1.2: { tableId: "table-1", term: "Kinh nghiệm dự án", tab: 1 },
+            1.3: { tableId: "table-5", term: "Quy trình triển khai", tab: 5 },
+            1.4: { tableId: "table-1", term: "Tỷ lệ", tab: 1 },
+            2.1: { tableId: "table-2", term: "Phân tích bối cảnh", tab: 2 },
+            2.2: { tableId: "table-2", term: "Đề xuất định vị", tab: 2 },
+            2.3: { tableId: "table-2", term: "Đề xuất nền tảng", tab: 2 },
+            2.4: { tableId: "table-2", term: "Đề xuất thông điệp", tab: 2 },
+            3.1: { tableId: "table-3", term: "Thiết kế logo", tab: 3 },
+            3.2: { tableId: "table-3", term: "Hệ thống nhận diện", tab: 3 },
+            3.3: { tableId: "table-4", term: "Bộ ứng dụng văn phòng", tab: 4 },
+            3.4: { tableId: "table-4", term: "Ứng dụng kỹ thuật số", tab: 4 },
+            3.5: { tableId: "table-3", term: "Tính hệ thống", tab: 3 },
+            3.6: { tableId: "table-3", term: "Tính sáng tạo", tab: 3 },
+            4.1: { tableId: "table-5", term: "Quy trình triển khai", tab: 5 },
+            4.2: { tableId: "table-5", term: "Cách thức giao tiếp", tab: 5 },
+            4.3: { tableId: "table-5", term: "Khả năng phối hợp", tab: 5 },
+            5.1: { tableId: "table-4", term: "Hồ sơ bàn giao", tab: 4 },
+            5.2: { tableId: "table-5", term: "Chính sách hậu mãi", tab: 5 },
+            5.3: { tableId: "table-6", term: "Tổng chi phí", tab: 6 },
+          };
+          const vendors = Array.from(
+            document.querySelectorAll(
+              "#table-7-scoring thead th[contenteditable]"
+            )
+          ).map((th) => th.innerText);
+          Object.keys(basisMap).forEach((itemKey) => {
+            const basisCell = document.querySelector(
+              `[data-basis-for="${itemKey}"]`
+            );
+            if (basisCell) {
+              const { tableId, term, tab } = basisMap[itemKey];
+              const tableData = getTableData(tableId);
+              const dataRow = tableData.find((r) =>
+                r[0].toLowerCase().includes(term.toLowerCase())
+              );
+              let basisText = `<strong>Cơ sở (Tab ${tab}):</strong> ${term} | `;
+              if (dataRow) {
+                basisText += vendors
+                  .map((v, i) => `${v}: ${dataRow[i + 1] || "N/A"}`)
+                  .join("; ");
+              } else {
+                basisText += "Không tìm thấy dữ liệu.";
+              }
+              basisCell.innerHTML = basisText;
+            }
+          });
+        }
+
+        let charts = {};
+        function updateDashboard() {
+          const { totalScores, groupScores, vendorNames } = calculateScores();
+          const costTableData = getTableData("table-6");
+          const costDevRow = costTableData.find((r) =>
+            r[0].includes("Tổng chi phí")
+          );
+          const costDev = costDevRow
+            ? costDevRow
+                .slice(1)
+                .map((c) => parseInt(c.replace(/[^0-9.-]+/g, "")) || 0)
+            : Array(vendorNames.length).fill(0);
+
+          Object.values(charts).forEach((chart) => chart.destroy());
+
+          const summaryTable = document.querySelector("#table-8-summary");
+          if (summaryTable) {
+            const vendorData = vendorNames
+              .map((name, index) => ({
+                name: name,
+                score: totalScores[index],
+                cost: costDev[index],
+              }))
+              .sort((a, b) => b.score - a.score);
+            let summaryBodyHTML = "";
+            vendorData.forEach((vendor, index) => {
+              summaryBodyHTML += `<tr>
+                            <td class="text-center font-bold">${index + 1}</td>
+                            <td>${vendor.name}</td>
+                            <td>${vendor.score.toFixed(1)}</td>
+                            <td>${
+                              vendor.cost > 0
+                                ? parseInt(vendor.cost).toLocaleString(
+                                    "vi-VN"
+                                  ) + "đ"
+                                : "N/A"
+                            }</td>
+                            <td contenteditable="true"></td>
+                        </tr>`;
+            });
+            summaryTable.innerHTML = `<thead><tr><th>Xếp hạng</th><th>Nhà cung cấp</th><th>Tổng điểm</th><th>Tổng chi phí</th><th>Ghi chú</th></tr></thead><tbody>${summaryBodyHTML}</tbody>`;
+          }
+
+          charts.valueChart = new Chart(
+            document.getElementById("valueChart").getContext("2d"),
+            {
+              type: "bar",
+              data: {
+                labels: vendorNames,
+                datasets: [
+                  {
+                    label: "Tổng điểm Năng lực (Thang 100)",
+                    data: totalScores,
+                    backgroundColor: "rgba(5, 150, 105, 0.7)",
+                    yAxisID: "y-score",
+                    order: 1,
+                  },
+                  {
+                    label: "Chi phí dự án (VND)",
+                    data: costDev,
+                    backgroundColor: "rgba(249, 115, 22, 0.7)",
+                    yAxisID: "y-cost",
+                    order: 2,
+                  },
+                ],
+              },
+              options: {
+                responsive: true,
+                plugins: { tooltip: { mode: "index", intersect: false } },
+                scales: {
+                  "y-score": {
+                    type: "linear",
+                    position: "left",
+                    title: { display: true, text: "Điểm Năng lực" },
+                    min: 0,
+                    max: 100,
+                  },
+                  "y-cost": {
+                    type: "linear",
+                    position: "right",
+                    title: { display: true, text: "Chi phí (VND)" },
+                    grid: { drawOnChartArea: false },
+                  },
+                },
+              },
+            }
+          );
+
+          const createGroupChart = (canvasId, label, groupKey, colors) => {
+            const chartCanvas = document.getElementById(canvasId);
+            if (!chartCanvas) return;
+            charts[canvasId] = new Chart(chartCanvas.getContext("2d"), {
+              type: "bar",
+              data: {
+                labels: vendorNames,
+                datasets: [
+                  {
+                    label: label,
+                    data: vendorNames.map(
+                      (v, i) => groupScores[i]?.[groupKey] ?? 0
+                    ),
+                    backgroundColor: colors,
+                  },
+                ],
+              },
+              options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true, max: 10 } },
+              },
+            });
+          };
+
+          const chartColors = [
+            "#3b82f6",
+            "#10b981",
+            "#f97316",
+            "#8b5cf6",
+            "#ef4444",
+          ];
+          createGroupChart(
+            "competencyChart",
+            "Điểm Năng lực & Kinh nghiệm",
+            "1",
+            chartColors
+          );
+          createGroupChart(
+            "strategyChart",
+            "Điểm Chiến lược",
+            "2",
+            chartColors
+          );
+          createGroupChart("designChart", "Điểm Thiết kế", "3", chartColors);
+          createGroupChart(
+            "processChart",
+            "Điểm Quy trình & Giao tiếp",
+            "4",
+            chartColors
+          );
+        }
+
+        document
+          .getElementById("update-charts-btn")
+          .addEventListener("click", () => {
+            calculateScores();
+            updateEvaluationBasis();
+            updateDashboard();
+          });
+
+        document
+          .getElementById("export-btn")
+          .addEventListener("click", function () {
+            const wb = XLSX.utils.book_new();
+            const sheetNames = [
+              "1_NangLuc",
+              "2_ChienLuoc",
+              "3_ThietKe",
+              "4_PhamVi",
+              "5_QuyTrinh",
+              "6_ChiPhi",
+              "7_ChamDiem",
+              "8_Dashboard",
+              "9_SWOT",
+            ];
+            const tableIds = [
+              "table-1",
+              "table-2",
+              "table-3",
+              "table-4",
+              "table-5",
+              "table-6",
+              "table-7-scoring",
+              "table-8-summary",
+              "table-9-swot",
+            ];
+            tableIds.forEach((id, index) => {
+              const table = document.getElementById(id);
+              if (table) {
+                const tableClone = table.cloneNode(true);
+                if (id === "table-7-scoring") {
+                  tableClone
+                    .querySelectorAll('td[contenteditable="true"]')
+                    .forEach((cell) => {
+                      cell.removeAttribute("contenteditable");
+                    });
+                }
+                const ws = XLSX.utils.table_to_sheet(tableClone, { raw: true });
+                XLSX.utils.book_append_sheet(wb, ws, sheetNames[index]);
+              }
+            });
+            const vendorName =
+              document.querySelector("#table-1 th:nth-child(2)")?.innerText ||
+              "SoSanh";
+            XLSX.writeFile(
+              wb,
+              `So_Sanh_Agency_Branding_${vendorName.replace(/\s+/g, "_")}.xlsx`
+            );
+          });
+
+        loadAllData();
+        calculateScores();
+        updateEvaluationBasis();
+        document
+          .getElementById("tab-container")
+          .addEventListener("input", (e) => {
+            if (
+              e.target.matches(
+                'td[contenteditable="true"], th[contenteditable="true"]'
+              )
+            ) {
+              calculateScores();
+              updateEvaluationBasis();
+            }
+          });
+      });
+    </script>
+  </body>
+</html>
